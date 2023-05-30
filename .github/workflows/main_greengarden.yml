@@ -28,7 +28,7 @@ jobs:
           npm run test --if-present
       
       - run: |
-          Compress-Archive . node-app.zip .
+          Compress-Archive . node-app.zip
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
