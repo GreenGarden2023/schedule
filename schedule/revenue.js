@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const httpClient = require('../lib/http-client');
 const nodemailer = require('nodemailer');
 
+const fontEndGateway = 'https://ggarden.shop'
+
 // Cấu hình thông tin email
 const transporter = nodemailer.createTransport({
     service: 'Gmail', // Hoặc bạn có thể sử dụng các dịch vụ email khác như Outlook, Yahoo, vv.
@@ -56,7 +58,7 @@ function getRevenueInDate(){
         // 10h tối mỗi ngày
         // 0 22 * * *
         // */10 * * * * *
-        cron.schedule('0 22 * * *', async () => {
+        cron.schedule('0 8 * * *', async () => {
             const res = await httpClient.get('/revenue/get-revenue-in-date')
             const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
 
@@ -247,7 +249,7 @@ function getRevenueInMonth(){
 function sendMailForTechnician(item){
     return new Promise((res, rej) => {
         try{
-            const { technicianMail, listComboCarlendar, listServiceCarlendar } = item
+            const { technicianMail, listComboCarlendar, listServiceCarlendar, technicianName } = item
             const mailOptions = {
                 from: 'gott150899@gmail.com', 
                 to: technicianMail, // admin gmail
@@ -255,42 +257,182 @@ function sendMailForTechnician(item){
                 // text: 'Hello from Node.js!'
             }
 
-            const fontEndGateway = 'https://ggarden.shop'
-
-            if(listComboCarlendar.length === 0 && listServiceCarlendar.length === 0){
-                mailOptions.text = `Không có đơn hàng nào cần chăm sóc ngày hôm nay`
-                
-            }else{
-                let msg = 'Đơn hàng chăm sóc tự chọn\n-----------------------------\n'
+            // if(listComboCarlendar.length === 0 && listServiceCarlendar.length === 0){
+            //     mailOptions.text = `Không có đơn hàng nào cần chăm sóc ngày hôm nay`
+            // }else{
+                let msg = `
+                <html lang="en">
+                <head>
+                    <title>Email Technician</title>
+                    <style>
+                        body {
+                            background-color: #ffff;
+                        }
+                        h1{
+                            margin-right: 10px;
+                        }
+                        .text-start{
+                            margin-bottom: 5px;
+                        }
+                        .name{
+                            color: orange;
+                            font-size: 20px;
+                            text-decoration: underline;
+                        }
+                        h4{
+                            margin-bottom: 5px;
+                            text-decoration: underline;
+                        }
+                        .order{
+                            margin-bottom: 5px;
+                        }
+                        .order_no{
+                            display: flex;
+                            align-items: center;
+                        }
+                        .link{
+                            padding: 10px;
+                            border-radius: 5px;
+                            background-color: #0099FF;
+                            color: #fff;
+                        }
+                        .text-center{
+                            color: #ffff;
+                            margin: 0;
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                        }
+                        .card {
+                            background: #00a76f ;
+                        }
+            
+                        .card-body {
+                            border: 3px solid #0db8388c;
+                            border-radius: 5px;
+                            padding: 30px;
+                        }
+            
+                        .btn-light{
+                            color: #02240bd2;
+                            margin-top: 25px;
+                            margin-bottom: 10px;
+                        }
+            
+                        .order_no{
+                            display: flex;
+                        }
+                        .order_no .left{
+                            display: flex;
+                            margin-right: 5px;
+                        }
+            
+                        .order .order_no .order_detail{
+                            display: flex;
+                            padding-left:10px;
+                        }
+            
+                        .header{
+                            display: flex;
+                            justify-content: center;
+                        }
+            
+                        .hr .solid{
+                            border-top: 3px solid #ffff;
+                        }
+                        .button{
+                            text-align: center;
+                            margin-top: 50px;
+                        }
+                        .btn-light{
+                            text-decoration: none;
+                            color: #fff;
+                            border-radius: 5px;
+                            background-color: #5cb9d8;
+                            padding: 10px 50px;
+                            font-size: 24px;
+                        }
+                        .luu-y{
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="background-image">
+                        <div class="text-center card">
+                            <div class="card-body">
+                                <div class="header">
+                                    <h1>Thông báo chăm sóc cây cảnh: </h1>
+                                    <h1>${getCurrentDate()}</h1>
+                                </div>
+                                <div>
+                                    <p class="text-start">
+                                        Dear 
+                                        <span class="name">${technicianName}</span>
+                                    </p>
+                                    <p class="text-start">Bạn có đơn hàng cần chăm sóc thuộc hệ thống GreenGarden,
+                                    vui lòng theo dõi đơn hàng và lên lịch chăm sóc cho đơn hàng này và cập nhật tiến độ chăm sóc.</p>
+                                    <h4>Đơn hàng theo yêu cầu:</h4>
+                `
                 if(listServiceCarlendar.length === 0){
-                    msg += 'Không có đơn hàng nào\n'
+                    msg += '<h3>Không có đơn hàng nào</h3>'
                 }else{
                     listServiceCarlendar.forEach(e => {
                         const { serviceOrderId, serviceOrderCode } = e
-                        msg += `Đơn hàng ${serviceOrderCode}. Link: ${fontEndGateway}/panel/take-care-order-assigned/${serviceOrderId} \n`
+                        // msg += `Đơn hàng ${serviceOrderCode}. Link: ${fontEndGateway}/panel/take-care-order-assigned/${serviceOrderId} \n`
+                        msg += `
+                        <div class="order">
+                            <div class="order_no">
+                                <div class="left">Mã đơn hàng chăm sóc:</div>
+                                <div class="right">${serviceOrderCode}</div>
+                                <div class="order_detail"> <a href="${fontEndGateway}/panel/take-care-order-assigned/${serviceOrderId}" target="_blank" class="link">Chi tiết đơn hàng</a> </div>
+                            </div>
+                        </div>
+                        `
                     });
                 }
-                msg += '\n-----------------------------\n'
-                msg += 'Đơn hàng chăm sóc theo gói\n-----------------------------\n'
+                msg += '<hr class="solid">'
+                msg += '<h4>Đơn hàng theo gói:</h4>'
                 if(listComboCarlendar.length === 0){
-                    msg += 'Không có đơn hàng nào\n'
+                    msg += '<h3>Không có đơn hàng nào</h3>'
                 }else{
                     listComboCarlendar.forEach(e => {
                         const { serviceOrderId, serviceOrderCode } = e
-                        msg += `Đơn hàng ${serviceOrderCode}. Link: ${fontEndGateway}/panel/manage-package-order/${serviceOrderId} \n`
+                        // msg += `Đơn hàng ${serviceOrderCode}. Link: ${fontEndGateway}/panel/manage-package-order/${serviceOrderId} \n`
+                        msg += `
+                        <div class="order">
+                            <div class="order_no">
+                                <div class="left">Mã đơn hàng chăm sóc:</div>
+                                <div class="right">${serviceOrderCode}</div>
+                                <div class="order_detail"> <a href="${fontEndGateway}/panel/manage-package-order/${serviceOrderId}" target="_blank" class="link">Chi tiết đơn hàng</a> </div>
+                            </div>
+                        </div>`
                     });
-                }
-                mailOptions.text = msg
-            }
+                } 
+                msg += `
+                <div class="button">
+                            <a href="${fontEndGateway}" target="_blank" class="btn btn-light"> Đi đến website</a>
+                        </div>        
+                        <p class="luu-y">LƯU Ý: Các kỹ thuật viên vui lòng cập nhật ngày chăm sóc và báo cáo đúng tiến độ.</p>           
+                    </div>    
+                </div>
+            </div>
+        </div>
+    </body>
+</html>`
+                mailOptions.html = msg
+            // }
             transporter.sendMail(mailOptions, function(error, info){
                 if (error) {
                     console.log('Gửi email không thành công:', error);
                 } else {
                     console.log('Gửi email thành công:', info.response);
                 }
+                res()
             });
-            res()
         }catch(err){
+            console.log(err)
             rej(err)
         }
     })
@@ -303,7 +445,7 @@ function getServiceCalendars(){
         // 0 8 * * *
         // 0p mỗi giờ
         // 0 * * * *
-        cron.schedule('0 8 * * *', async () => {
+        cron.schedule('59 * * * *', async () => {
             try{
                 const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
                 console.log('---------------res-----------------', res)

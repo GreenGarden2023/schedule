@@ -6,10 +6,10 @@ const httpClient = require('./lib/http-client');
 const app = express(); 
 const port = process.env.PORT || 8080
 
-testFunction()
+// testFunction()
 
 app.get('/', function(req, res){
-    // testFunction()
+    testFunction()
     res.send("Hello World");
 })
 // app.get('/cron-job', async (req, res) =>{
