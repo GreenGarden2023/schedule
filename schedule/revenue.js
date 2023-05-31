@@ -297,24 +297,28 @@ function sendMailForTechnician(item){
 }
 
 function getServiceCalendars(){
-    console.log('getRevenueInMonth');
+    console.log('getServiceCalendars');
     try{
         // 8h sáng mỗi ngày
         // 0 8 * * *
-        // 1 tiếng 1 lần
+        // 0p mỗi giờ
         // 0 * * * *
-        cron.schedule('0 * * * *', async () => {
-            const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
-
-            const prmAll = []
-
-            res.data.forEach(element => {
-                prmAll.push(sendMailForTechnician(element))
-            });
-
-            await Promise.all(prmAll)
-
-            console.log('send mail tech success');
+        cron.schedule('0 8 * * *', async () => {
+            try{
+                const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
+                console.log('---------------res-----------------', res)
+                const prmAll = []
+    
+                res.data.forEach(element => {
+                    prmAll.push(sendMailForTechnician(element))
+                });
+    
+                await Promise.all(prmAll)
+    
+                console.log('send mail tech success');
+            }catch(err){
+                console.log('err---320', err)
+            }
         });
     }catch{
         console.log('getRevenueInMonth-----', err)
