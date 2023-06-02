@@ -30,26 +30,45 @@ function getCurrentDate(){
     return formattedDate
 }
 function getPrevMonth(){
+    // Lấy ngày hiện tại
     const currentDate = new Date();
+
+    // Đặt ngày hiện tại thành ngày 0 của tháng hiện tại (để truy cập vào tháng trước)
+    currentDate.setDate(0);
+
+    // Lấy ngày cuối cùng của tháng trước
+    const lastDayOfPreviousMonth = currentDate.getDate();
+
+    // Lấy tháng trước
+    const previousMonth = currentDate.getMonth() + 1; // Phải cộng 1 vì getMonth() trả về giá trị từ 0 đến 11
+
+    // Lấy năm hiện tại
+    const currentYear = currentDate.getFullYear();
+
+    return `${previousMonth}/${currentYear}`
+
+    // console.log(`Ngày cuối cùng của tháng trước là: `);
+
+    // const currentDate = new Date();
     
-    const dates = currentDate.getDate()
-    const month = currentDate.getMonth()
-    const year = currentDate.getFullYear()
+    // const dates = currentDate.getDate()
+    // const month = currentDate.getMonth()
+    // const year = currentDate.getFullYear()
 
-    let value = new Date()
+    // let value = new Date()
 
-    if(dates === 1){
-        value = new Date(year, month, 0)
-    }else{
-        value = new Date(year, month, dates - 1)
-    }
+    // if(dates === 1){
+    //     value = new Date(year, month, 0)
+    // }else{
+    //     value = new Date(year, month, dates - 1)
+    // }
 
-    const formattedDate = value.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-    return formattedDate
+    // const formattedDate = value.toLocaleDateString('en-GB', {
+    //     day: '2-digit',
+    //     month: '2-digit',
+    //     year: 'numeric'
+    // });
+    // return formattedDate
 }
 
 
@@ -77,99 +96,117 @@ function currencyFormat(number){
 
 function getRevenueInDate(){
     console.log('getRevenueInDate');
-    try{
         // 10h tối mỗi ngày
         // 0 22 * * *
         // */10 * * * * *
-        cron.schedule('10h tối mỗi ngày', async () => {
-            const res = await httpClient.get('/revenue/get-revenue-in-date')
-            const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
+        cron.schedule('0 * * * *', async () => {
+            while(true){
+                try{
+                    const res = await httpClient.get('/revenue/get-revenue-in-date')
+                    const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
+                    const mailOptions = {
+                        from: 'gott150899@gmail.com', 
+                        to: 'tranthihaiha660@gmail.com', // admin gmail
+                    }
+                    mailOptions.subject = `Doanh thu theo ngày (${getCurrentDate()})`
+                    mailOptions.html = `
+                    <html>
+                        <head>
+                            <style>
+                                p{
+                                    margin: 0;
+                                }
+                                h3{
+                                    color: #00a76f;
+                                    font-size: 24px;
+                                }
+                                .container{
+                                    text-align: center;
+                                }
+                                .item{
+                                    border-radius: 5px;
+                                    color: #fff;
+                                    padding: 5px 0;
+                                    margin-top: 10px;
+                                }
+                                .title{
+                                    font-size: 22px;
+                                }
+                                .price{
+                                    font-size: 28px;
+                                }
+                                .green{
+                                    background-color: #00a76f;
+                                }
+                                .blue{
+                                    background-color: #0099FF;
+                                }
+                                .orange{
+                                    background-color: #f95441;
+                                }
+                                .light-blue{
+                                    background-color: #5cb9d8;
+                                }
+                                .soft{
+                                    background-color: #707070;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h3>Báo cáo doanh thu ngày ${getCurrentDate()}</h3>
+                                <div class="content">
+                                    <div class="item green">
+                                        <p class="title">Doanh thu thuê</p>
+                                        <p class="price">${currencyFormat(rentRevenue)}</p>
+                                    </div>
+                                    <div class="item blue">
+                                        <p class="title">Doanh thu bán</p>
+                                        <p class="price">${currencyFormat(saleRevenue)}</p>
+                                    </div>
+                                    <div class="item light-blue">
+                                        <p class="title">Doanh thu dv chăm sóc tự chọn</p>
+                                        <p class="price">${currencyFormat(serviceRevenue)}</p>
+                                    </div>
+                                    <div class="item soft">
+                                        <p class="title">Doanh thu dv chăm sóc theo gói</p>
+                                        <p class="price">${currencyFormat(serviceComboRevenue)}</p>
+                                    </div>
+                                    <div class="item orange">
+                                        <p class="title">Tổng doanh thu</p>
+                                        <p class="price">${currencyFormat(totalRevenue)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                    </html>
+                `
+                    await sendMail(mailOptions)
+                    console.log('getRevenueInDate----success')
+                    break;
+                }catch{
 
-            adminGmailOptions.subject = `Doanh thu theo ngày (${getCurrentDate()})`
-            adminGmailOptions.html = `
-            <html>
-                <head>
-                    <style>
-                        p{
-                            margin: 0;
-                        }
-                        h3{
-                            color: #00a76f;
-                            font-size: 24px;
-                        }
-                        .container{
-                            text-align: center;
-                        }
-                        .item{
-                            border-radius: 5px;
-                            color: #fff;
-                            padding: 5px 0;
-                            margin-top: 10px;
-                        }
-                        .title{
-                            font-size: 22px;
-                        }
-                        .price{
-                            font-size: 28px;
-                        }
-                        .green{
-                            background-color: #00a76f;
-                        }
-                        .blue{
-                            background-color: #0099FF;
-                        }
-                        .orange{
-                            background-color: #f95441;
-                        }
-                        .light-blue{
-                            background-color: #5cb9d8;
-                        }
-                        .soft{
-                            background-color: #707070;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h3>Báo cáo doanh thu ngày ${getCurrentDate()}</h3>
-                        <div class="content">
-                            <div class="item green">
-                                <p class="title">Doanh thu thuê</p>
-                                <p class="price">${currencyFormat(rentRevenue)}</p>
-                            </div>
-                            <div class="item blue">
-                                <p class="title">Doanh thu bán</p>
-                                <p class="price">${currencyFormat(saleRevenue)}</p>
-                            </div>
-                            <div class="item light-blue">
-                                <p class="title">Doanh thu dv chăm sóc tự chọn</p>
-                                <p class="price">${currencyFormat(serviceRevenue)}</p>
-                            </div>
-                            <div class="item soft">
-                                <p class="title">Doanh thu dv chăm sóc theo gói</p>
-                                <p class="price">${currencyFormat(serviceComboRevenue)}</p>
-                            </div>
-                            <div class="item orange">
-                                <p class="title">Tổng doanh thu</p>
-                                <p class="price">${currencyFormat(totalRevenue)}</p>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-            </html>
-        `
-            transporter.sendMail(adminGmailOptions, function(error, info){
+                }
+            }
+        });
+}
+
+function sendMail(gmailOptions){
+    return new Promise((res, rej) =>{
+        try{
+            transporter.sendMail(gmailOptions, function(error, info){
                 if (error) {
-                console.log('Gửi email không thành công:', error);
+                    console.log('Gửi email không thành công:', error);
+                    rej()
                 } else {
-                console.log('Gửi email thành công:', info.response);
+                    console.log('Gửi email thành công:', info.response);
+                    res()
                 }
             });
-            console.log('running a task every 5 seconds');
-        });
-    }catch(err){
-        console.log('getRevenueInDate-----', err)
-    }
+        }catch{
+            rej()
+        }
+    })
 }
 
 function getRevenueInMonth(){
@@ -178,95 +215,100 @@ function getRevenueInMonth(){
         // 11h tối cuối tháng
         // 30 23 28-31 * *
         // */15 * * * * *
-        cron.schedule('30 23 28-31 * *', async () => {
-            const res = await httpClient.get('/revenue/get-revenue-in-month')
-            const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
+        cron.schedule('0 * * * *', async () => {
+                while(true){
+                    try{
+                        const res = await httpClient.get('/revenue/get-revenue-in-month')
+                        const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
+                        const mailOptions = {
+                            from: 'gott150899@gmail.com', 
+                            to: 'tranthihaiha660@gmail.com', // admin gmail
+                            // text: 'Hello from Node.js!'
+                        }
+                        mailOptions.subject = `Doanh thu theo tháng (${getPrevMonth()})`
+                        mailOptions.html = `
+                        <html>
+                            <head>
+                                <style>
+                                    p{
+                                        margin: 0;
+                                    }
+                                    h3{
+                                        color: #00a76f;
+                                        font-size: 24px;
+                                    }
+                                    .container{
+                                        text-align: center;
+                                    }
+                                    .item{
+                                        border-radius: 5px;
+                                        color: #fff;
+                                        padding: 5px 0;
+                                        margin-top: 10px;
+                                    }
+                                    .title{
+                                        font-size: 22px;
+                                        color: #fff;
+                                    }
+                                    .price{
+                                        font-size: 28px;
+                                        color: #fff;
+                                    }
+                                    .green{
+                                        background-color: #00a76f;
+                                    }
+                                    .blue{
+                                        background-color: #0099FF;
+                                    }
+                                    .orange{
+                                        background-color: #f95441;
+                                    }
+                                    .light-blue{
+                                        background-color: #5cb9d8;
+                                    }
+                                    .soft{
+                                        background-color: #707070;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <h3>Báo cáo doanh thu tháng ${getMonthYear()}</h3>
+                                    <div class="content">
+                                        <div class="item green">
+                                            <p class="title">Doanh thu thuê</p>
+                                            <p class="price">${currencyFormat(rentRevenue)}</p>
+                                        </div>
+                                        <div class="item blue">
+                                            <p class="title">Doanh thu bán</p>
+                                            <p class="price">${currencyFormat(saleRevenue)}</p>
+                                        </div>
+                                        <div class="item light-blue">
+                                            <p class="title">Doanh thu dv chăm sóc tự chọn</p>
+                                            <p class="price">${currencyFormat(serviceRevenue)}</p>
+                                        </div>
+                                        <div class="item soft">
+                                            <p class="title">Doanh thu dv chăm sóc theo gói</p>
+                                            <p class="price">${currencyFormat(serviceComboRevenue)}</p>
+                                        </div>
+                                        <div class="item orange">
+                                            <p class="title">Tổng doanh thu</p>
+                                            <p class="price">${currencyFormat(totalRevenue)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </body>
+                        </html>
+                    `
+                        await sendMail(mailOptions)
+                        console.log('getRevenueInMonth----success')
+                        break;
+                    }catch{
 
-            adminGmailOptions.subject = `Doanh thu theo tháng (${getPrevMonth()})`
-            adminGmailOptions.html = `
-            <html>
-                <head>
-                    <style>
-                        p{
-                            margin: 0;
-                        }
-                        h3{
-                            color: #00a76f;
-                            font-size: 24px;
-                        }
-                        .container{
-                            text-align: center;
-                        }
-                        .item{
-                            border-radius: 5px;
-                            color: #fff;
-                            padding: 5px 0;
-                            margin-top: 10px;
-                        }
-                        .title{
-                            font-size: 22px;
-                            color: #fff;
-                        }
-                        .price{
-                            font-size: 28px;
-                            color: #fff;
-                        }
-                        .green{
-                            background-color: #00a76f;
-                        }
-                        .blue{
-                            background-color: #0099FF;
-                        }
-                        .orange{
-                            background-color: #f95441;
-                        }
-                        .light-blue{
-                            background-color: #5cb9d8;
-                        }
-                        .soft{
-                            background-color: #707070;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h3>Báo cáo doanh thu tháng ${getMonthYear()}</h3>
-                        <div class="content">
-                            <div class="item green">
-                                <p class="title">Doanh thu thuê</p>
-                                <p class="price">${currencyFormat(rentRevenue)}</p>
-                            </div>
-                            <div class="item blue">
-                                <p class="title">Doanh thu bán</p>
-                                <p class="price">${currencyFormat(saleRevenue)}</p>
-                            </div>
-                            <div class="item light-blue">
-                                <p class="title">Doanh thu dv chăm sóc tự chọn</p>
-                                <p class="price">${currencyFormat(serviceRevenue)}</p>
-                            </div>
-                            <div class="item soft">
-                                <p class="title">Doanh thu dv chăm sóc theo gói</p>
-                                <p class="price">${currencyFormat(serviceComboRevenue)}</p>
-                            </div>
-                            <div class="item orange">
-                                <p class="title">Tổng doanh thu</p>
-                                <p class="price">${currencyFormat(totalRevenue)}</p>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-            </html>
-        `
-            transporter.sendMail(adminGmailOptions, function(error, info){
-                if (error) {
-                console.log('Gửi email không thành công:', error);
-                } else {
-                console.log('Gửi email thành công:', info.response);
+                    }
                 }
             });
-            console.log('running a task every 5 seconds');
-        });
-    }catch{
+    }catch(err){
         console.log('getRevenueInMonth-----', err)
     }
 }
@@ -470,9 +512,7 @@ function getServiceCalendars(){
         // 0p mỗi giờ
         // 0 * * * *
         cron.schedule('0 * * * *', async () => {
-
             while(true){
-                let count = 0
                 try{
                     const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
                     console.log('---------------res-----------------', res)
@@ -485,11 +525,11 @@ function getServiceCalendars(){
                     await Promise.all(prmAll)
         
                     console.log('send mail tech success');
-                    count++;
+                    console.log('getServiceCalendars----success')
+                    break;
                 }catch(err){
                     console.log('err---320', err)
                 }
-                if(count !== 0) break;
             }
         });
     }catch{
