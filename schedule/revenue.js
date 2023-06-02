@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 
 const adminGmailOptions = {
     from: 'gott150899@gmail.com', 
-    to: 'gottse130528@fpt.edu.vn', // admin gmail
+    to: 'tranthihaiha660@gmail.com', // admin gmail
     subject: 'Test Email', 
     // text: 'Hello from Node.js!'
 }
@@ -29,6 +29,29 @@ function getCurrentDate(){
     });
     return formattedDate
 }
+function getPrevMonth(){
+    const currentDate = new Date();
+    
+    const dates = currentDate.getDate()
+    const month = currentDate.getMonth()
+    const year = currentDate.getFullYear()
+
+    let value = new Date()
+
+    if(dates === 1){
+        value = new Date(year, month, 0)
+    }else{
+        value = new Date(year, month, dates - 1)
+    }
+
+    const formattedDate = value.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    return formattedDate
+}
+
 
 function getMonthYear(){
     const currentDate = new Date();
@@ -58,10 +81,11 @@ function getRevenueInDate(){
         // 10h tối mỗi ngày
         // 0 22 * * *
         // */10 * * * * *
-        cron.schedule('0 8 * * *', async () => {
+        cron.schedule('10h tối mỗi ngày', async () => {
             const res = await httpClient.get('/revenue/get-revenue-in-date')
             const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
 
+            adminGmailOptions.subject = `Doanh thu theo ngày (${getCurrentDate()})`
             adminGmailOptions.html = `
             <html>
                 <head>
@@ -149,7 +173,7 @@ function getRevenueInDate(){
 }
 
 function getRevenueInMonth(){
-    console.log('getRevenueInMonth');
+    console.log('getRevenueInMonth', getPrevMonth());
     try{
         // 11h tối cuối tháng
         // 30 23 28-31 * *
@@ -158,6 +182,7 @@ function getRevenueInMonth(){
             const res = await httpClient.get('/revenue/get-revenue-in-month')
             const { totalRevenue, rentRevenue, saleRevenue, serviceRevenue, serviceComboRevenue } = res.data.revenues
 
+            adminGmailOptions.subject = `Doanh thu theo tháng (${getPrevMonth()})`
             adminGmailOptions.html = `
             <html>
                 <head>
@@ -252,7 +277,7 @@ function sendMailForTechnician(item){
             const { technicianMail, listComboCarlendar, listServiceCarlendar, technicianName } = item
             const mailOptions = {
                 from: 'gott150899@gmail.com', 
-                to: technicianMail, // admin gmail
+                to: technicianMail, // tech gmail
                 subject: `Đơn hàng cần chăm sóc ngày ${getCurrentDate()}`, 
                 // text: 'Hello from Node.js!'
             }
@@ -334,8 +359,7 @@ function sendMailForTechnician(item){
                         }
             
                         .header{
-                            display: flex;
-                            justify-content: center;
+                            text-align: center;
                         }
             
                         .hr .solid{
@@ -445,21 +469,27 @@ function getServiceCalendars(){
         // 0 8 * * *
         // 0p mỗi giờ
         // 0 * * * *
-        cron.schedule('59 * * * *', async () => {
-            try{
-                const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
-                console.log('---------------res-----------------', res)
-                const prmAll = []
-    
-                res.data.forEach(element => {
-                    prmAll.push(sendMailForTechnician(element))
-                });
-    
-                await Promise.all(prmAll)
-    
-                console.log('send mail tech success');
-            }catch(err){
-                console.log('err---320', err)
+        cron.schedule('0 * * * *', async () => {
+
+            while(true){
+                let count = 0
+                try{
+                    const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
+                    console.log('---------------res-----------------', res)
+                    const prmAll = []
+        
+                    res.data.forEach(element => {
+                        prmAll.push(sendMailForTechnician(element))
+                    });
+        
+                    await Promise.all(prmAll)
+        
+                    console.log('send mail tech success');
+                    count++;
+                }catch(err){
+                    console.log('err---320', err)
+                }
+                if(count !== 0) break;
             }
         });
     }catch{
