@@ -1,19 +1,19 @@
 const express = require('express'); 
-const { testFunction } = require('./lib/db');
+const { scheduleFunction } = require('./lib/db');
 const httpClient = require('./lib/http-client');
 
 
 const app = express(); 
 const port = process.env.PORT || 8080
 
-// testFunction()
+// scheduleFunction()
 
 app.get('/', function(req, res){
     // testFunction()
     res.send("Hello World");
 })
 app.get('/cron-job', async (req, res) =>{
-    testFunction()
+    scheduleFunction()
     res.send('started cron job')
 })
 

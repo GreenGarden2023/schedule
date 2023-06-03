@@ -99,7 +99,7 @@ function getRevenueInDate(){
         // 10h tối mỗi ngày
         // 0 22 * * *
         // */10 * * * * *
-        cron.schedule('0 * * * *', async () => {
+        cron.schedule('0 22 * * *', async () => {
             while(true){
                 try{
                     const res = await httpClient.get('/revenue/get-revenue-in-date')
@@ -212,10 +212,9 @@ function sendMail(gmailOptions){
 function getRevenueInMonth(){
     console.log('getRevenueInMonth', getPrevMonth());
     try{
-        // 11h tối cuối tháng
-        // 30 23 28-31 * *
-        // */15 * * * * *
-        cron.schedule('0 * * * *', async () => {
+        // 0h 0p 0s ngày 1 mỗi tháng
+        // 0 0 1 * *
+        cron.schedule('0 0 1 * *', async () => {
                 while(true){
                     try{
                         const res = await httpClient.get('/revenue/get-revenue-in-month')
@@ -273,7 +272,7 @@ function getRevenueInMonth(){
                             </head>
                             <body>
                                 <div class="container">
-                                    <h3>Báo cáo doanh thu tháng ${getMonthYear()}</h3>
+                                    <h3>Báo cáo doanh thu tháng ${getPrevMonth()}</h3>
                                     <div class="content">
                                         <div class="item green">
                                             <p class="title">Doanh thu thuê</p>
@@ -511,7 +510,7 @@ function getServiceCalendars(){
         // 0 8 * * *
         // 0p mỗi giờ
         // 0 * * * *
-        cron.schedule('0 * * * *', async () => {
+        cron.schedule('0 8 * * *', async () => {
             while(true){
                 try{
                     const res = await httpClient.get('/service-calendar/get-service-calendars-today-by-technician')
